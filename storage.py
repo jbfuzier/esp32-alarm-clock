@@ -2,35 +2,33 @@ import json
 import os
 
 class Storage:
-    def __init__(self, filename='storage.json'):
+    def __init__(self, filename='data.json'):
         self.filename = filename
-        self.data = self.load_data()
+        self.data = {}
+        self.load()
 
-    def load_data(self):
-        if not os.path.exists(self.filename):
-            return {'alarms': [], 'settings': {}}
-        with open(self.filename, 'r') as f:
-            return json.load(f)
+    def load(self):
+        if os.path.exists(self.filename):
+            with open(self.filename, 'r') as file:
+                self.data = json.load(file)
 
-    def save_data(self):
-        with open(self.filename, 'w') as f:
-            json.dump(self.data, f, indent=4)
+    def save(self):
+        with open(self.filename, 'w') as file:
+            json.dump(self.data, file, indent=4)
 
-    def add_alarm(self, alarm):
-        self.data['alarms'].append(alarm)
-        self.save_data()
+    def get(self, key):
+        return self.data.get(key)
 
-    def remove_alarm(self, alarm_index):
-        if 0 <= alarm_index < len(self.data['alarms']):
-            del self.data['alarms'][alarm_index]
-            self.save_data()
+    def set(self, key, value):
+        self.data[key] = value
+        self.save()
 
-    def update_setting(self, key, value):
-        self.data['settings'][key] = value
-        self.save_data()
+    async def get_async(self, key):
+        # Simulating async operation with asyncio.sleep
+        import asyncio
+        await asyncio.sleep(0)  # Simulate async behavior
+        return self.get(key)
 
-    def get_alarms(self):
-        return self.data['alarms']
-
-    def get_settings(self):
-        return self.data['settings']
+    async def set_async(self, key, value):
+        await asyncio.sleep(0)  # Simulate async behavior
+        self.set(key, value)
