@@ -1,0 +1,3 @@
+micropython-urequests
+micropython-machine
+micropython-umqtt.robust
