@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alarm Clock Configuration</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { text-align: center; }
+        .container { max-width: 400px; margin: auto; }
+        .alarm-list { margin-top: 20px; }
+        .alarm-item { margin: 10px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Alarm Clock Configuration</h1>
+        <div>
+            <label for="alarmTime">Set Alarm Time:</label><br>
+            <input type="time" id="alarmTime" name="alarmTime">
+            <button onclick="setAlarm()">Set Alarm</button>
+        </div>
+        <div class="alarm-list" id="alarmList">
+            <h2>Current Alarms:</h2>
+            <!-- Alarms will be displayed here -->
+        </div>
+    </div>
+    <script>
+        function setAlarm() {
+            const alarmTime = document.getElementById('alarmTime').value;
+            const alarmList = document.getElementById('alarmList');
+            const alarmItem = document.createElement('div');
+            alarmItem.classList.add('alarm-item');
+            alarmItem.textContent = `Alarm set for: ${alarmTime}`;
+            alarmList.appendChild(alarmItem);
+        }
+    </script>
+</body>
+</html>
