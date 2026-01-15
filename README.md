@@ -1,3 +1,7 @@
+This was an attempt to code a simple micropython app with Github copilot using claude.
+The result was a bunch of nonsense, tehcnology is not there yet : https://github.com/copilot/share/027c4230-4b04-8882-9112-8c09409e4143
+
+
 # ESP32 Alarm Clock
 
 This repository contains the code and setup instructions for building an ESP32-based Alarm Clock.
