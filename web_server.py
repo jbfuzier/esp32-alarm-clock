@@ -98,7 +98,7 @@ class AsyncHTTPServer:
                 if body_str:
                     try:
                         body = json.loads(body_str)
-                    except:
+                    except (ValueError, KeyError):
                         body = body_str
             
             return {

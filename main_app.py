@@ -168,17 +168,19 @@ class AlarmClockApp:
         """
         try:
             if MICROPYTHON and self.rtc:
-                # MicroPython: (year, month, day, weekday, hour, minute, second, subsecond)
+                # MicroPython RTC.datetime(): (year, month, day, weekday, hour, minute, second, subsecond)
+                # weekday: 0=Monday through 6=Sunday
                 dt = self.rtc.datetime()
                 hour = dt[4]
                 minute = dt[5]
-                weekday = dt[3]  # 0=Monday, 6=Sunday
+                weekday = dt[3]
             else:
-                # Standard Python time module
+                # Standard Python time.localtime()
+                # tm_wday: 0=Monday through 6=Sunday
                 lt = time.localtime()
                 hour = lt[3]
                 minute = lt[4]
-                weekday = lt[6]  # 0=Monday, 6=Sunday
+                weekday = lt[6]
             
             return (hour, minute, weekday)
         except Exception as e:
@@ -266,6 +268,18 @@ class AlarmClockApp:
         except Exception as e:
             print(f"Error triggering alarm: {e}")
     
+    async def _trigger_alarm_wrapper(self, alarm):
+        """
+        Wrapper for alarm triggering to handle exceptions
+        
+        Args:
+            alarm: Alarm dictionary
+        """
+        try:
+            await self._trigger_alarm(alarm)
+        except Exception as e:
+            print(f"Error in alarm task for alarm {alarm.get('id')}: {e}")
+    
     async def check_alarms(self):
         """
         Continuously monitor and trigger alarms
@@ -273,9 +287,13 @@ class AlarmClockApp:
         print("Starting alarm monitoring...")
         
         last_check_minute = -1
+        alarm_tasks = []
         
         while True:
             try:
+                # Clean up completed tasks
+                alarm_tasks = [task for task in alarm_tasks if not task.done()]
+                
                 # Get current time
                 time_info = self._get_current_time()
                 if not time_info:
@@ -297,8 +315,9 @@ class AlarmClockApp:
                 # Check each alarm
                 for alarm in alarms:
                     if self._should_trigger_alarm(alarm, current_hour, current_minute, current_weekday):
-                        # Trigger alarm (don't await to allow multiple alarms)
-                        asyncio.create_task(self._trigger_alarm(alarm))
+                        # Trigger alarm with error handling wrapper
+                        task = asyncio.create_task(self._trigger_alarm_wrapper(alarm))
+                        alarm_tasks.append(task)
                 
             except Exception as e:
                 print(f"Error in alarm check: {e}")
