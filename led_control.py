@@ -155,7 +155,7 @@ class LEDController:
             duration_minutes: Duration of ramp in minutes
         """
         duration_seconds = duration_minutes * 60
-        steps = max(duration_seconds, 1)  # At least 1 step
+        steps = int(max(duration_seconds, 1))  # At least 1 step, must be integer
         step_delay = duration_seconds / steps
         
         for step in range(steps + 1):

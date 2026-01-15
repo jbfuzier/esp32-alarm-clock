@@ -23,3 +23,5 @@ Egg-*
 
 # MicroPython specific
 .mpy
+alarms.json
+settings.json
