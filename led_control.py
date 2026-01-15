@@ -1,65 +1,72 @@
-import asyncio
-import time
-import board
-import neopixel
+try:
+    from neopixel import NeoPixel, Color
+    import machine
+    import uasyncio as asyncio
+except ImportError:
+    # Fallback mode
+    class NeoPixel:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def fill(self, color):
+            pass
 
 class LEDController:
     def __init__(self, pin, num_leds):
-        self.pin = pin
-        self.num_leds = num_leds
-        self.pixels = neopixel.NeoPixel(pin, num_leds, auto_write=False)
-        self.brightness = 1.0
+        self.leds = NeoPixel(pin, num_leds)
 
-    async def set_color(self, color, duration):
-        for i in range(self.num_leds):
-            self.pixels[i] = color
-        await self.ramp_brightness(duration)
-        self.pixels.show()
-
-    async def ramp_brightness(self, duration):
-        start_time = time.time()
-        start_brightness = self.brightness
-        target_brightness = 0.0
-        while time.time() - start_time < duration:
-            elapsed = time.time() - start_time
-            ratio = elapsed / duration
-            self.brightness = start_brightness + (target_brightness - start_brightness) * ratio
-            self.pixels.brightness = self.brightness
-            self.pixels.show()
+    async def ramp_brightness(self, target_brightness, duration):
+        current_brightness = self.leds.brightness
+        step = (target_brightness - current_brightness) / (duration * 1000 / 10)
+        while current_brightness != target_brightness:
+            current_brightness += step
+            self.set_brightness(int(current_brightness))
             await asyncio.sleep(0.01)
 
-    async def pulse_effect(self, color, pulse_duration):
-        start_time = time.time()
-        while True:
-            await self.set_color(color, pulse_duration)
-            await self.set_color((0, 0, 0), pulse_duration)
-            if time.time() - start_time > 10:
-                break
+    async def set_color_temperature(self, cct, duration):
+        warm_white = (255, 200, 150)
+        cold_white = (255, 255, 255)
+        r = warm_white[0] + (cold_white[0] - warm_white[0]) * (cct / 100)
+        g = warm_white[1] + (cold_white[1] - warm_white[1]) * (cct / 100)
+        b = warm_white[2] + (cold_white[2] - warm_white[2]) * (cct / 100)
+        self.set_color((int(r), int(g), int(b)))
 
-    async def error_blink(self, color, blink_duration, count):
-        for _ in range(count):
-            await self.set_color(color, blink_duration)
-            await self.set_color((0, 0, 0), blink_duration)
+    async def pulse_effect(self, intensity, duration):
+        for _ in range(int(duration * 2)):
+            self.set_brightness(intensity)
+            await asyncio.sleep(0.5)
+            self.set_brightness(0)
+            await asyncio.sleep(0.5)
 
-    async def set_cct(self, cct_value, duration):
-        for i in range(self.num_leds):
-            # Placeholder for CCT conversion logic
-            self.pixels[i] = self.cct_to_rgb(cct_value)
-        await self.ramp_brightness(duration)
-        self.pixels.show()
+    async def error_blinking(self, times, duration):
+        for _ in range(times):
+            self.set_color((255, 0, 0))  # Red for error
+            await asyncio.sleep(duration)  # Blink duration
+            self.set_color((0, 0, 0))
+            await asyncio.sleep(duration)
 
-    def cct_to_rgb(self, cct):
-        # Implement CCT conversion to RGB here
-        return (255, 255, 255)  # Placeholder conversion
+    def sync_set_brightness(self, target_brightness, duration):
+        current_brightness = self.leds.brightness
+        step = (target_brightness - current_brightness) / (duration * 1000 / 10)
+        while current_brightness != target_brightness:
+            current_brightness += step
+            self.set_brightness(int(current_brightness))
+            time.sleep(0.01)
 
-    def synchronous_set_color(self, color, duration):
-        asyncio.run(self.set_color(color, duration))
+    def sync_set_color_temperature(self, cct, duration):
+        warm_white = (255, 200, 150)
+        cold_white = (255, 255, 255)
+        r = warm_white[0] + (cold_white[0] - warm_white[0]) * (cct / 100)
+        g = warm_white[1] + (cold_white[1] - warm_white[1]) * (cct / 100)
+        b = warm_white[2] + (cold_white[2] - warm_white[2]) * (cct / 100)
+        self.set_color((int(r), int(g), int(b)))
 
-    def synchronous_pulse_effect(self, color, pulse_duration):
-        asyncio.run(self.pulse_effect(color, pulse_duration))
+    def set_brightness(self, brightness):
+        # Set the brightness for all LEDs
+        self.leds.brightness = brightness
+        self.leds.write()
 
-    def synchronous_error_blink(self, color, blink_duration, count):
-        asyncio.run(self.error_blink(color, blink_duration, count))
-
-    def synchronous_set_cct(self, cct_value, duration):
-        asyncio.run(self.set_cct(cct_value, duration))
+    def set_color(self, color):
+        # Set color for all LEDs
+        self.leds.fill(color)
+        self.leds.write()
